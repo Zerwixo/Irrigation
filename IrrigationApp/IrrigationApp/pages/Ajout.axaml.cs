@@ -20,24 +20,64 @@ public partial class Ajout : UserControl
 
 	private void Valide(object? sender, RoutedEventArgs e)
 	{
-		if (!int.TryParse(m3d.Text, out var depart))
-		{
-			if (AppState.DataList != null && AppState.DataList.Where(item => item.Appareil == appareil.SelectedItem?.ToString()).ToList().Count > 0)
-			{
-				depart = AppState.DataList.Where(item => item.Appareil == appareil.SelectedItem?.ToString()).ToList()[^1].M3a;
-			}
-			else
-			{
-				depart = 0;
-			}
-		}
+		var appareilValue = appareil.SelectedItem?.ToString() ?? string.Empty;
+		var departProvided = !string.IsNullOrWhiteSpace(m3d.Text);
+		var previousForAppareil = AppState.DataList?.LastOrDefault(item => item.Appareil == appareilValue);
 
-		if (!int.TryParse(m3a.Text, out var arrivee))
+		int depart = 0;
+		if (string.IsNullOrWhiteSpace(m3d.Text))
+		{
+			depart = previousForAppareil?.M3a ?? 0;
+		}
+		else if (!int.TryParse(m3d.Text, out depart))
 		{
 			return;
 		}
 
-		if (arrivee < depart)
+		if (departProvided && depart != 0 && previousForAppareil is not null && previousForAppareil.M3a == 0)
+		{
+			previousForAppareil.M3a = depart;
+			previousForAppareil.Consomation = previousForAppareil.M3a >= previousForAppareil.M3d
+				? previousForAppareil.M3a - previousForAppareil.M3d
+				: 0;
+
+			var updateUrl = "http://localhost:8080/" +
+				$"?id={previousForAppareil.Id}" +
+				$"&date={Uri.EscapeDataString(previousForAppareil.Date)}" +
+				$"&parcelle={Uri.EscapeDataString(previousForAppareil.Parcelle)}" +
+				$"&appareil={Uri.EscapeDataString(previousForAppareil.Appareil)}" +
+				$"&m3d={previousForAppareil.M3d}" +
+				$"&m3a={previousForAppareil.M3a}" +
+				$"&consomation={previousForAppareil.Consomation}" +
+				$"&reseau={Uri.EscapeDataString(previousForAppareil.Reseau)}" +
+				$"&commentaire={Uri.EscapeDataString(previousForAppareil.Commentaire)}";
+
+			try
+			{
+				using var client = new HttpClient();
+				using var request = new HttpRequestMessage(HttpMethod.Put, updateUrl);
+				using var response = client.SendAsync(request).GetAwaiter().GetResult();
+				using var reader = new StreamReader(response.Content.ReadAsStream());
+				_ = reader.ReadToEnd();
+			}
+			catch (HttpRequestException ex)
+			{
+				Console.WriteLine($"Failed to update previous data on server: {ex.Message}");
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Unexpected error while updating previous data on server: {ex.Message}");
+			}
+		}
+
+		int arrivee = 0;
+		var arriveeProvided = !string.IsNullOrWhiteSpace(m3a.Text);
+		if (arriveeProvided && !int.TryParse(m3a.Text, out arrivee))
+		{
+			return;
+		}
+
+		if (arriveeProvided && arrivee < depart)
 		{
 			return;
 		}
@@ -45,7 +85,6 @@ public partial class Ajout : UserControl
 		AppState.DataList ??= new System.Collections.Generic.List<Data>();
 
 		var selectedDate = datePicker.SelectedDate ?? DateTime.Now;
-		var appareilValue = appareil.SelectedItem?.ToString() ?? string.Empty;
 		var reseauValue = reseau.SelectedItem?.ToString() ?? string.Empty;
 		var parcelleValue = parcelle.Text ?? string.Empty;
 		var commentaireValue = commentaire.Text ?? string.Empty;
@@ -58,7 +97,7 @@ public partial class Ajout : UserControl
 			Appareil = appareilValue,
 			M3d = depart,
 			M3a = arrivee,
-			Consomation = arrivee - depart,
+			Consomation = arrivee >= depart ? arrivee - depart : 0,
 			Reseau = reseauValue,
 			Commentaire = commentaireValue
 		};

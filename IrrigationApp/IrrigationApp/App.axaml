@@ -13,13 +13,23 @@
         <ResourceDictionary>
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Light">
-                    <Color x:Key="AppTextColor">#0F172A</Color>
+                    <Color x:Key="AppTextColor">#0000b3</Color>
+                    <Color x:Key="AppTextShadowColor">#ffffff</Color>
+                    <Color x:Key="AppButtonBackgroundColor">#FFF8FAFC</Color>
+                    <Color x:Key="AppButtonBorderColor">#FF94A3B8</Color>
+                    <Color x:Key="AppInputBackgroundColor">#FFFFFFFF</Color>
+                    <Color x:Key="AppInputBorderColor">#FF94A3B8</Color>
                     <SolidColorBrush x:Key="SystemControlForegroundBaseHighBrush" Color="{DynamicResource AppTextColor}"/>
                     <SolidColorBrush x:Key="SystemControlForegroundBaseMediumHighBrush" Color="{DynamicResource AppTextColor}"/>
                     <SolidColorBrush x:Key="SystemControlForegroundBaseMediumBrush" Color="{DynamicResource AppTextColor}"/>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
-                    <Color x:Key="AppTextColor">#F8FAFC</Color>
+                    <Color x:Key="AppTextColor">#0000b3</Color>
+                    <Color x:Key="AppTextShadowColor">#ffffff</Color>
+                    <Color x:Key="AppButtonBackgroundColor">#FFF1F5F9</Color>
+                    <Color x:Key="AppButtonBorderColor">#FF94A3B8</Color>
+                    <Color x:Key="AppInputBackgroundColor">#FFF8FAFC</Color>
+                    <Color x:Key="AppInputBorderColor">#FF94A3B8</Color>
                     <SolidColorBrush x:Key="SystemControlForegroundBaseHighBrush" Color="{DynamicResource AppTextColor}"/>
                     <SolidColorBrush x:Key="SystemControlForegroundBaseMediumHighBrush" Color="{DynamicResource AppTextColor}"/>
                     <SolidColorBrush x:Key="SystemControlForegroundBaseMediumBrush" Color="{DynamicResource AppTextColor}"/>
@@ -27,6 +37,10 @@
             </ResourceDictionary.ThemeDictionaries>
 
             <SolidColorBrush x:Key="AppTextBrush" Color="{DynamicResource AppTextColor}"/>
+            <SolidColorBrush x:Key="AppButtonBackgroundBrush" Color="{DynamicResource AppButtonBackgroundColor}"/>
+            <SolidColorBrush x:Key="AppButtonBorderBrush" Color="{DynamicResource AppButtonBorderColor}"/>
+            <SolidColorBrush x:Key="AppInputBackgroundBrush" Color="{DynamicResource AppInputBackgroundColor}"/>
+            <SolidColorBrush x:Key="AppInputBorderBrush" Color="{DynamicResource AppInputBorderColor}"/>
         </ResourceDictionary>
     </Application.Resources>
 
@@ -35,6 +49,60 @@
 
         <Style Selector="TextBlock">
             <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
+            <Setter Property="FontSize" Value="22"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Effect">
+                <DropShadowEffect Color="{DynamicResource AppTextShadowColor}" BlurRadius="8" OffsetX="2" OffsetY="2" Opacity="0.9"/>
+            </Setter>
+        </Style>
+
+        <Style Selector="Button /template/ ContentPresenter">
+            <Setter Property="Effect">
+                <DropShadowEffect Color="{DynamicResource AppTextShadowColor}" BlurRadius="8" OffsetX="2" OffsetY="2" Opacity="0.9"/>
+            </Setter>
+        </Style>
+
+        <Style Selector="TextBox /template/ TextPresenter">
+            <Setter Property="Effect">
+                <DropShadowEffect Color="{DynamicResource AppTextShadowColor}" BlurRadius="8" OffsetX="2" OffsetY="2" Opacity="0.9"/>
+            </Setter>
+        </Style>
+
+        <Style Selector="Button">
+            <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource AppButtonBackgroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppButtonBorderBrush}"/>
+            <Setter Property="Opacity" Value="1"/>
+            <Setter Property="Effect">
+                <DropShadowEffect Color="{DynamicResource AppTextColor}" BlurRadius="18" OffsetX="0" OffsetY="0" Opacity="0.95"/>
+            </Setter>
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+        </Style>
+
+        <Style Selector="TextBox">
+            <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
+            <Setter Property="PlaceholderForeground" Value="{DynamicResource AppTextBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource AppInputBackgroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppInputBorderBrush}"/>
+            <Setter Property="Opacity" Value="1"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+        </Style>
+
+        <Style Selector="ComboBox">
+            <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource AppInputBackgroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppInputBorderBrush}"/>
+            <Setter Property="Opacity" Value="1"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+        </Style>
+
+        <Style Selector="DatePicker">
+            <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource AppInputBackgroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppInputBorderBrush}"/>
+            <Setter Property="Opacity" Value="1"/>
+            <Setter Property="FontWeight" Value="Medium"/>
         </Style>
     </Application.Styles>
 </Application>

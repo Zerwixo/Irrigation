@@ -1,0 +1,11 @@
+﻿<Solution>
+  <Project Path="IrrigationApp.Android/IrrigationApp.Android.csproj">
+    <Deploy />
+  </Project>
+  <Project Path="IrrigationApp.Browser/IrrigationApp.Browser.csproj" />
+  <Project Path="IrrigationApp.Desktop/IrrigationApp.Desktop.csproj" />
+  <Project Path="IrrigationApp.iOS/IrrigationApp.iOS.csproj">
+    <Deploy />
+  </Project>
+  <Project Path="IrrigationApp/IrrigationApp.csproj" />
+</Solution>

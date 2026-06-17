@@ -1,0 +1,92 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+                         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                         xmlns:local="using:IrrigationApp"
+                         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+                         x:Class="IrrigationApp.Modifier">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="16,12" Spacing="12" MaxWidth="760" HorizontalAlignment="Center">
+            <TextBlock TextAlignment="Center" FontSize="24" FontWeight="SemiBold" Text="Modifier saisies" />
+
+            <Button
+                Content="Retour"
+                Click="RetourMenu"
+                HorizontalAlignment="Center" />
+
+            <TextBlock TextAlignment="Center" Text="10 derniers elements" />
+
+            <ItemsControl x:Name="RecentItemsControl" HorizontalAlignment="Stretch">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="local:Data">
+                        <Border Margin="0,0,0,8" Padding="12" BorderThickness="1" BorderBrush="#8A8A8A" CornerRadius="6" HorizontalAlignment="Stretch">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="{Binding Date, StringFormat='Date: {0}'}" TextWrapping="Wrap" />
+                                <TextBlock Text="{Binding Parcelle, StringFormat='Parcelle: {0}'}" TextWrapping="Wrap" />
+                                <TextBlock Text="{Binding Appareil, StringFormat='Appareil: {0}'}" TextWrapping="Wrap" />
+                                <TextBlock Text="{Binding M3d, StringFormat='M3d: {0}'}" TextWrapping="Wrap" />
+                                <TextBlock Text="{Binding M3a, StringFormat='M3a: {0}'}" TextWrapping="Wrap" />
+                                <TextBlock Text="{Binding Consomation, StringFormat='Consommation: {0}'}" TextWrapping="Wrap" />
+                                <TextBlock Text="{Binding Reseau, StringFormat='Reseau: {0}'}" TextWrapping="Wrap" />
+                                <TextBlock Text="{Binding Commentaire, StringFormat='Commentaire: {0}'}" TextWrapping="Wrap" />
+                                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Left">
+                                    <Button Content="Modifier" Tag="{Binding Id}" Click="StartEdit" />
+                                    <Button Content="Supprimer" Tag="{Binding Id}" Click="DeleteItem" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <Border x:Name="EditPanel" IsVisible="False" Padding="12" BorderThickness="1" BorderBrush="#8A8A8A" CornerRadius="6">
+                <StackPanel Spacing="8" MaxWidth="540" HorizontalAlignment="Stretch">
+                    <TextBlock x:Name="EditTitle" FontWeight="SemiBold" Text="Edition" />
+
+                    <TextBlock Text="Date" />
+                    <DatePicker x:Name="editDatePicker" />
+
+                    <TextBlock Text="Parcelle" />
+                    <TextBox x:Name="editParcelle" PlaceholderText="entrer le numero" />
+
+                    <TextBlock Text="Appareil" />
+                    <ComboBox x:Name="editAppareil" SelectedIndex="0">
+                        <x:String>350</x:String>
+                        <x:String>450</x:String>
+                        <x:String>500</x:String>
+                        <x:String>550</x:String>
+                        <x:String>Rampe R3</x:String>
+                        <x:String>Rampe R19</x:String>
+                        <x:String>Pivot R2</x:String>
+                        <x:String>Pivot R15</x:String>
+                        <x:String>Pivot 4T</x:String>
+                        <x:String>Pivot 3T</x:String>
+                        <x:String>Pivot STP</x:String>
+                    </ComboBox>
+
+                    <TextBlock Text="M3 depart" />
+                    <TextBox x:Name="editM3d" PlaceholderText="entrer le numero" />
+
+                    <TextBlock Text="M3 arrivee" />
+                    <TextBox x:Name="editM3a" PlaceholderText="entrer le numero" />
+
+                    <TextBlock Text="Reseau" />
+                    <ComboBox x:Name="editReseau" SelectedIndex="0">
+                        <x:String>Prive</x:String>
+                        <x:String>Collectif</x:String>
+                    </ComboBox>
+
+                    <TextBlock Text="Commentaire" />
+                    <TextBox x:Name="editCommentaire" PlaceholderText="entrer un commentaire (optionnel)" />
+
+                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                        <Button Content="Enregistrer" Click="SaveEdit" />
+                        <Button Content="Annuler" Click="CancelEdit" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
+

@@ -1,0 +1,81 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+                         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+                         x:Class="IrrigationApp.Ajout">
+
+
+    
+     
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+
+        <StackPanel Margin="30,0" Spacing="12">
+            <TextBlock
+                Text="Nouvelles donnees"
+                HorizontalAlignment="Center"
+                FontSize="24"
+                FontWeight="SemiBold" />
+
+            <TextBlock Text="Date" HorizontalAlignment="Center" />
+            <DatePicker x:Name="datePicker" HorizontalAlignment="Center" />
+
+            <TextBlock Text="Parcelle R..." HorizontalAlignment="Center" />
+            <TextBox
+                x:Name="parcelle"
+                HorizontalAlignment="Stretch"
+                PlaceholderText="entrer le numero" />
+
+            <TextBlock Text="Appareil" HorizontalAlignment="Center" />
+            <ComboBox x:Name="appareil" HorizontalAlignment="Stretch" SelectedIndex="0">
+                <x:String>350</x:String>
+                <x:String>450</x:String>
+                <x:String>500</x:String>
+                <x:String>550</x:String>
+                <x:String>Rampe R3</x:String>
+                <x:String>Rampe R19</x:String>
+                <x:String>Pivot R2</x:String>
+                <x:String>Pivot R15</x:String>
+                <x:String>Pivot 4T</x:String>
+                <x:String>Pivot 3T</x:String>
+                <x:String>Pivot STP</x:String>
+            </ComboBox>
+
+            <TextBlock Text="Metre cube depart" HorizontalAlignment="Center" />
+            <TextBox
+                x:Name="m3d"
+                HorizontalAlignment="Stretch"
+                PlaceholderText="entrer le numero (ou ne rien mettre pour valeur par defaut)" />
+
+            <TextBlock Text="Metre cube arrivee" HorizontalAlignment="Center" />
+            <TextBox
+                x:Name="m3a"
+                HorizontalAlignment="Stretch"
+                PlaceholderText="entrer le numero" />
+
+            <TextBlock Text="Reseaux" HorizontalAlignment="Center" />
+            <ComboBox x:Name="reseau" HorizontalAlignment="Stretch" SelectedIndex="0">
+                <x:String>Prive</x:String>
+                <x:String>Collectif</x:String>
+            </ComboBox>
+
+            <TextBlock Text="Commentaire" HorizontalAlignment="Center" />
+            <TextBox
+                x:Name="commentaire"
+                HorizontalAlignment="Stretch"
+                PlaceholderText="entrer un commentaire (optionnel)" />
+
+            <Button
+                x:Name="Valider"
+                Content="Valider"
+                Click="Valide"
+                HorizontalAlignment="Center" />
+            <Button
+                x:Name="Retour1"
+                Content="Retour"
+                Click="RetourMenu"
+                HorizontalAlignment="Center" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
+

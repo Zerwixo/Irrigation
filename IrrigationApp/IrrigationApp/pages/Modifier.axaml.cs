@@ -2,6 +2,7 @@ namespace IrrigationApp;
 
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.VisualTree;
 using System;
 using System.Globalization;
 using System.IO;
@@ -12,6 +13,15 @@ public partial class Modifier : UserControl
 {
     public event EventHandler? BackRequested;
 	private Data? _editingData;
+	private Border? _activeEditPanel;
+	private DatePicker? _activeDatePicker;
+	private TextBox? _activeParcelle;
+	private ComboBox? _activeAppareil;
+	private TextBox? _activeM3d;
+	private TextBox? _activeM3a;
+	private ComboBox? _activeReseau;
+	private TextBox? _activeCommentaire;
+	private TextBlock? _activeEditTitle;
 
     public Modifier()
 	{
@@ -31,69 +41,115 @@ public partial class Modifier : UserControl
 
 	private void StartEdit(object? sender, RoutedEventArgs e)
 	{
-		if (sender is not Button button || button.Tag is not int id)
+		if (sender is not Button button || button.Tag is not Data selectedData)
 		{
 			return;
 		}
 
-		_editingData = AppState.DataList?.FirstOrDefault(d => d.Id == id);
+		_editingData = selectedData;
 		if (_editingData is null)
 		{
 			return;
 		}
 
-		EditTitle.Text = $"Edition de l'element #{_editingData.Id}";
-		editParcelle.Text = _editingData.Parcelle;
-		editM3d.Text = _editingData.M3d.ToString();
-		editM3a.Text = _editingData.M3a.ToString();
-		editCommentaire.Text = _editingData.Commentaire;
+		var itemContainer = button.FindAncestorOfType<Border>();
+		if (itemContainer is null)
+		{
+			return;
+		}
+
+		var inlineEditPanel = FindDescendantByName<Border>(itemContainer, "InlineEditPanel");
+		if (inlineEditPanel is null)
+		{
+			return;
+		}
+
+		var inlineEditTitle = FindDescendantByName<TextBlock>(inlineEditPanel, "InlineEditTitle");
+		var inlineEditDatePicker = FindDescendantByName<DatePicker>(inlineEditPanel, "InlineEditDatePicker");
+		var inlineEditParcelle = FindDescendantByName<TextBox>(inlineEditPanel, "InlineEditParcelle");
+		var inlineEditAppareil = FindDescendantByName<ComboBox>(inlineEditPanel, "InlineEditAppareil");
+		var inlineEditM3d = FindDescendantByName<TextBox>(inlineEditPanel, "InlineEditM3d");
+		var inlineEditM3a = FindDescendantByName<TextBox>(inlineEditPanel, "InlineEditM3a");
+		var inlineEditReseau = FindDescendantByName<ComboBox>(inlineEditPanel, "InlineEditReseau");
+		var inlineEditCommentaire = FindDescendantByName<TextBox>(inlineEditPanel, "InlineEditCommentaire");
+
+		if (inlineEditTitle is null || inlineEditDatePicker is null || inlineEditParcelle is null || inlineEditAppareil is null || inlineEditM3d is null || inlineEditM3a is null || inlineEditReseau is null || inlineEditCommentaire is null)
+		{
+			return;
+		}
+
+		if (_activeEditPanel is not null && _activeEditPanel != inlineEditPanel)
+		{
+			_activeEditPanel.IsVisible = false;
+		}
+
+		_activeEditPanel = inlineEditPanel;
+		_activeEditTitle = inlineEditTitle;
+		_activeDatePicker = inlineEditDatePicker;
+		_activeParcelle = inlineEditParcelle;
+		_activeAppareil = inlineEditAppareil;
+		_activeM3d = inlineEditM3d;
+		_activeM3a = inlineEditM3a;
+		_activeReseau = inlineEditReseau;
+		_activeCommentaire = inlineEditCommentaire;
+
+		_activeEditTitle.Text = $"Edition de l'element #{_editingData.Id}";
+		_activeParcelle.Text = _editingData.Parcelle;
+		_activeM3d.Text = _editingData.M3d.ToString();
+		_activeM3a.Text = _editingData.M3a.ToString();
+		_activeCommentaire.Text = _editingData.Commentaire;
 
 		if (DateTime.TryParseExact(_editingData.Date, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
 		{
-			editDatePicker.SelectedDate = parsedDate;
+			_activeDatePicker.SelectedDate = parsedDate;
 		}
 		else
 		{
-			editDatePicker.SelectedDate = DateTime.Now;
+			_activeDatePicker.SelectedDate = DateTime.Now;
 		}
 
-		SelectComboValue(editAppareil, _editingData.Appareil);
-		SelectComboValue(editReseau, _editingData.Reseau);
+		SelectComboValue(_activeAppareil, _editingData.Appareil);
+		SelectComboValue(_activeReseau, _editingData.Reseau);
 
-		EditPanel.IsVisible = true;
+		_activeEditPanel.IsVisible = true;
 	}
 
 	private void SaveEdit(object? sender, RoutedEventArgs e)
 	{
-		if (_editingData is null)
+		if (_editingData is null || _activeDatePicker is null || _activeParcelle is null || _activeAppareil is null || _activeM3d is null || _activeM3a is null || _activeReseau is null || _activeCommentaire is null)
 		{
 			return;
 		}
 
-		if (!int.TryParse(editM3d.Text, out var depart))
+		if (!int.TryParse(_activeM3d.Text, out var depart))
 		{
 			return;
 		}
 
-		if (!int.TryParse(editM3a.Text, out var arrivee))
+		int arrivee;
+		if (string.IsNullOrWhiteSpace(_activeM3a.Text))
+		{
+			arrivee = 0;
+		}
+		else if (!int.TryParse(_activeM3a.Text, out arrivee))
 		{
 			return;
 		}
 
-		if (arrivee < depart)
+		if (arrivee != 0 && arrivee < depart)
 		{
 			return;
 		}
 
-		var selectedDate = editDatePicker.SelectedDate ?? DateTime.Now;
+		var selectedDate = _activeDatePicker.SelectedDate ?? DateTime.Now;
 		_editingData.Date = selectedDate.ToString("dd/MM/yyyy");
-		_editingData.Parcelle = editParcelle.Text ?? string.Empty;
-		_editingData.Appareil = editAppareil.SelectedItem?.ToString() ?? string.Empty;
+		_editingData.Parcelle = _activeParcelle.Text ?? string.Empty;
+		_editingData.Appareil = _activeAppareil.SelectedItem?.ToString() ?? string.Empty;
 		_editingData.M3d = depart;
 		_editingData.M3a = arrivee;
-		_editingData.Consomation = arrivee - depart;
-		_editingData.Reseau = editReseau.SelectedItem?.ToString() ?? string.Empty;
-		_editingData.Commentaire = editCommentaire.Text ?? string.Empty;
+		_editingData.Consomation = arrivee >= depart ? arrivee - depart : 0;
+		_editingData.Reseau = _activeReseau.SelectedItem?.ToString() ?? string.Empty;
+		_editingData.Commentaire = _activeCommentaire.Text ?? string.Empty;
 
 		var requestUrl = "http://localhost:8080/" +
 			$"?id={_editingData.Id}" +
@@ -123,29 +179,22 @@ public partial class Modifier : UserControl
 			Console.WriteLine($"Unexpected error while updating data on server: {ex.Message}");
 		}
 
-		_editingData = null;
-		EditPanel.IsVisible = false;
+		CloseActiveEditPanel();
 		RefreshData();
 	}
 
 	private void CancelEdit(object? sender, RoutedEventArgs e)
 	{
-		_editingData = null;
-		EditPanel.IsVisible = false;
+		CloseActiveEditPanel();
 	}
 
 	private void DeleteItem(object? sender, RoutedEventArgs e)
 	{
-		if (sender is not Button button || button.Tag is not int id)
+		if (sender is not Button button || button.Tag is not Data data)
 		{
 			return;
 		}
-
-		var data = AppState.DataList?.FirstOrDefault(d => d.Id == id);
-		if (data is null)
-		{
-			return;
-		}
+		var id = data.Id;
 
 		try
 		{
@@ -171,11 +220,38 @@ public partial class Modifier : UserControl
 
 		if (_editingData?.Id == id)
 		{
-			_editingData = null;
-			EditPanel.IsVisible = false;
+			CloseActiveEditPanel();
 		}
 
 		RefreshData();
+	}
+
+	private void CloseActiveEditPanel()
+	{
+		_editingData = null;
+
+		if (_activeEditPanel is not null)
+		{
+			_activeEditPanel.IsVisible = false;
+		}
+
+		_activeEditPanel = null;
+		_activeDatePicker = null;
+		_activeParcelle = null;
+		_activeAppareil = null;
+		_activeM3d = null;
+		_activeM3a = null;
+		_activeReseau = null;
+		_activeCommentaire = null;
+		_activeEditTitle = null;
+	}
+
+	private static T? FindDescendantByName<T>(Control root, string name) where T : Control
+	{
+		return root
+			.GetVisualDescendants()
+			.OfType<T>()
+			.FirstOrDefault(control => string.Equals(control.Name, name, StringComparison.Ordinal));
 	}
 
 	private static void SelectComboValue(ComboBox comboBox, string value)

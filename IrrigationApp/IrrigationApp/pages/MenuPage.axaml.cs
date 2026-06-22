@@ -35,10 +35,5 @@ public partial class MenuPage : UserControl
     {
         ExcelRequested?.Invoke(this, EventArgs.Empty);
     }
-
-    private void QuitApplication(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        QuitRequested?.Invoke(this, EventArgs.Empty);
-    }
 }
 

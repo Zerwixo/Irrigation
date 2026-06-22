@@ -11,7 +11,6 @@
         <Button HorizontalAlignment="Center" Click="ModifData" Content="Modifier saisie"/>
         <Button HorizontalAlignment="Center" Click="VoirData" Content="Voir saisie"/>
         <Button HorizontalAlignment="Center" Click="CreationExcel" Content="Creer Excel"/>
-        <Button HorizontalAlignment="Center" Click="QuitApplication" Content="Quitter l'application"/>
     </StackPanel>
 </UserControl>
 

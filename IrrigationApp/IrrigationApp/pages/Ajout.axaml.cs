@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using System.IO;
 using System.Net.Http;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
@@ -23,6 +22,9 @@ public partial class Ajout : UserControl
 		var appareilValue = appareil.SelectedItem?.ToString() ?? string.Empty;
 		var departProvided = !string.IsNullOrWhiteSpace(m3d.Text);
 		var previousForAppareil = AppState.DataList?.LastOrDefault(item => item.Appareil == appareilValue);
+		var shouldUpdatePrevious = departProvided && previousForAppareil is not null && previousForAppareil.M3a == 0;
+		var previousArrivee = 0;
+		var previousConsomation = 0;
 
 		int depart = 0;
 		if (string.IsNullOrWhiteSpace(m3d.Text))
@@ -34,40 +36,32 @@ public partial class Ajout : UserControl
 			return;
 		}
 
-		if (departProvided && depart != 0 && previousForAppareil is not null && previousForAppareil.M3a == 0)
+		if (shouldUpdatePrevious && previousForAppareil is Data previousData && depart != 0)
 		{
-			previousForAppareil.M3a = depart;
-			previousForAppareil.Consomation = previousForAppareil.M3a >= previousForAppareil.M3d
-				? previousForAppareil.M3a - previousForAppareil.M3d
+			previousArrivee = depart;
+			previousConsomation = previousArrivee >= previousData.M3d
+				? previousArrivee - previousData.M3d
 				: 0;
 
-			var updateUrl = "http://localhost:8080/" +
-				$"?id={previousForAppareil.Id}" +
-				$"&date={Uri.EscapeDataString(previousForAppareil.Date)}" +
-				$"&parcelle={Uri.EscapeDataString(previousForAppareil.Parcelle)}" +
-				$"&appareil={Uri.EscapeDataString(previousForAppareil.Appareil)}" +
-				$"&m3d={previousForAppareil.M3d}" +
-				$"&m3a={previousForAppareil.M3a}" +
-				$"&consomation={previousForAppareil.Consomation}" +
-				$"&reseau={Uri.EscapeDataString(previousForAppareil.Reseau)}" +
-				$"&commentaire={Uri.EscapeDataString(previousForAppareil.Commentaire)}";
+			var updateUrl = AppState.ServerBaseUrl +
+				$"?id={previousData.Id}" +
+				$"&date={Uri.EscapeDataString(previousData.Date)}" +
+				$"&parcelle={Uri.EscapeDataString(previousData.Parcelle)}" +
+				$"&appareil={Uri.EscapeDataString(previousData.Appareil)}" +
+				$"&m3d={previousData.M3d}" +
+				$"&m3a={previousArrivee}" +
+				$"&consomation={previousConsomation}" +
+				$"&reseau={Uri.EscapeDataString(previousData.Reseau)}" +
+				$"&commentaire={Uri.EscapeDataString(previousData.Commentaire)}";
 
-			try
+			if (!ServerAccess.TrySend(HttpMethod.Put, updateUrl, "update previous data on server", out _))
 			{
-				using var client = new HttpClient();
-				using var request = new HttpRequestMessage(HttpMethod.Put, updateUrl);
-				using var response = client.SendAsync(request).GetAwaiter().GetResult();
-				using var reader = new StreamReader(response.Content.ReadAsStream());
-				_ = reader.ReadToEnd();
+				ReturnToMenuAfterConnectionError();
+				return;
 			}
-			catch (HttpRequestException ex)
-			{
-				Console.WriteLine($"Failed to update previous data on server: {ex.Message}");
-			}
-			catch (Exception ex)
-			{
-				Console.WriteLine($"Unexpected error while updating previous data on server: {ex.Message}");
-			}
+
+			previousForAppareil.M3a = previousArrivee;
+			previousForAppareil.Consomation = previousConsomation;
 		}
 
 		int arrivee = 0;
@@ -82,16 +76,15 @@ public partial class Ajout : UserControl
 			return;
 		}
 
-		AppState.DataList ??= new System.Collections.Generic.List<Data>();
-
 		var selectedDate = datePicker.SelectedDate ?? DateTime.Now;
 		var reseauValue = reseau.SelectedItem?.ToString() ?? string.Empty;
 		var parcelleValue = parcelle.Text ?? string.Empty;
 		var commentaireValue = commentaire.Text ?? string.Empty;
+		var nextId = (AppState.DataList?.Count ?? 0) + 1;
 
 		var data = new Data
 		{
-			Id = AppState.DataList.Count + 1,
+			Id = nextId,
 			Date = selectedDate.ToString("dd/MM/yyyy"),
 			Parcelle = parcelleValue,
 			Appareil = appareilValue,
@@ -102,6 +95,22 @@ public partial class Ajout : UserControl
 			Commentaire = commentaireValue
 		};
 
+		var createUrl = AppState.ServerBaseUrl + $"?date={Uri.EscapeDataString(data.Date)}&parcelle={Uri.EscapeDataString(data.Parcelle)}&appareil={Uri.EscapeDataString(data.Appareil)}&m3d={data.M3d}&m3a={data.M3a}&consomation={data.Consomation}&reseau={Uri.EscapeDataString(data.Reseau)}&commentaire={Uri.EscapeDataString(data.Commentaire)}";
+		if (!ServerAccess.TrySend(HttpMethod.Post, createUrl, "send new data to server", out var responseContent))
+		{
+			ReturnToMenuAfterConnectionError();
+			return;
+		}
+
+		Console.WriteLine("Response from server: " + responseContent);
+
+		if (shouldUpdatePrevious && previousForAppareil is not null)
+		{
+			previousForAppareil.M3a = previousArrivee;
+			previousForAppareil.Consomation = previousConsomation;
+		}
+
+		AppState.DataList ??= new System.Collections.Generic.List<Data>();
 		AppState.DataList.Add(data);
 
 		parcelle.Text = string.Empty;
@@ -112,32 +121,22 @@ public partial class Ajout : UserControl
 		reseau.SelectedIndex = 0;
 		commentaire.Text = string.Empty;
 
-		try
-		{
-			using var client = new HttpClient();
-			using var request = new HttpRequestMessage(HttpMethod.Post, "http://localhost:8080/" + $"?date={Uri.EscapeDataString(data.Date)}&parcelle={Uri.EscapeDataString(data.Parcelle)}&appareil={Uri.EscapeDataString(data.Appareil)}&m3d={data.M3d}&m3a={data.M3a}&consomation={data.Consomation}&reseau={Uri.EscapeDataString(data.Reseau)}&commentaire={Uri.EscapeDataString(data.Commentaire)}");
-			using var response = client.SendAsync(request).GetAwaiter().GetResult();
-			using var reader = new StreamReader(response.Content.ReadAsStream());
-			{
-	    		string content = reader.ReadToEnd();
-				Console.WriteLine("Response from server: " + content);
-			}
-		}
-		catch (HttpRequestException ex)
-		{
-			Console.WriteLine($"Failed to send new data to server: {ex.Message}");
-		}
-		catch (Exception ex)
-		{
-			Console.WriteLine($"Unexpected error while sending new data to server: {ex.Message}");
-		}
-
 
 		//Console.WriteLine($"Data added: Id={data.Id}, Date={data.Date}, Parcelle={data.Parcelle}, Appareil={data.Appareil}, M3d={data.M3d}, M3a={data.M3a}, Consomation={data.Consomation}, Reseau={data.Reseau}");
 		BackRequested?.Invoke(this, EventArgs.Empty);
 	}
 
 	private void RetourMenu(object? sender, RoutedEventArgs e)
+	{
+		BackRequested?.Invoke(this, EventArgs.Empty);
+	}
+
+	private void ReturnToMenuAfterConnectionError()
+	{
+		ServerAccess.HandleConnectionFailure(this, OnConnectionErrorDismissed);
+	}
+
+	private void OnConnectionErrorDismissed()
 	{
 		BackRequested?.Invoke(this, EventArgs.Empty);
 	}

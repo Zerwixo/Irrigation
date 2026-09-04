@@ -10,6 +10,7 @@
         <Button HorizontalAlignment="Center" Click="AjoutData" Content="Nouvelle saisie"/>
         <Button HorizontalAlignment="Center" Click="ModifData" Content="Modifier saisie"/>
         <Button HorizontalAlignment="Center" Click="VoirData" Content="Voir saisie"/>
+        <Button HorizontalAlignment="Center" Click="ConsomationData" Content="Consomation"/>
         <Button HorizontalAlignment="Center" Click="CreationExcel" Content="Creer Excel"/>
     </StackPanel>
 </UserControl>

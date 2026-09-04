@@ -5,7 +5,6 @@ using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using System;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 
@@ -142,42 +141,38 @@ public partial class Modifier : UserControl
 		}
 
 		var selectedDate = _activeDatePicker.SelectedDate ?? DateTime.Now;
-		_editingData.Date = selectedDate.ToString("dd/MM/yyyy");
-		_editingData.Parcelle = _activeParcelle.Text ?? string.Empty;
-		_editingData.Appareil = _activeAppareil.SelectedItem?.ToString() ?? string.Empty;
+		var updatedDate = selectedDate.ToString("dd/MM/yyyy");
+		var updatedParcelle = _activeParcelle.Text ?? string.Empty;
+		var updatedAppareil = _activeAppareil.SelectedItem?.ToString() ?? string.Empty;
+		var updatedConsomation = arrivee >= depart ? arrivee - depart : 0;
+		var updatedReseau = _activeReseau.SelectedItem?.ToString() ?? string.Empty;
+		var updatedCommentaire = _activeCommentaire.Text ?? string.Empty;
+
+		var requestUrl = AppState.ServerBaseUrl +
+			$"?id={_editingData.Id}" +
+			$"&date={Uri.EscapeDataString(updatedDate)}" +
+			$"&parcelle={Uri.EscapeDataString(updatedParcelle)}" +
+			$"&appareil={Uri.EscapeDataString(updatedAppareil)}" +
+			$"&m3d={depart}" +
+			$"&m3a={arrivee}" +
+			$"&consomation={updatedConsomation}" +
+			$"&reseau={Uri.EscapeDataString(updatedReseau)}" +
+			$"&commentaire={Uri.EscapeDataString(updatedCommentaire)}";
+
+		if (!ServerAccess.TrySend(HttpMethod.Put, requestUrl, "update data on server", out _))
+		{
+			ReturnToMenuAfterConnectionError();
+			return;
+		}
+
+		_editingData.Date = updatedDate;
+		_editingData.Parcelle = updatedParcelle;
+		_editingData.Appareil = updatedAppareil;
 		_editingData.M3d = depart;
 		_editingData.M3a = arrivee;
-		_editingData.Consomation = arrivee >= depart ? arrivee - depart : 0;
-		_editingData.Reseau = _activeReseau.SelectedItem?.ToString() ?? string.Empty;
-		_editingData.Commentaire = _activeCommentaire.Text ?? string.Empty;
-
-		var requestUrl = "http://localhost:8080/" +
-			$"?id={_editingData.Id}" +
-			$"&date={Uri.EscapeDataString(_editingData.Date)}" +
-			$"&parcelle={Uri.EscapeDataString(_editingData.Parcelle)}" +
-			$"&appareil={Uri.EscapeDataString(_editingData.Appareil)}" +
-			$"&m3d={_editingData.M3d}" +
-			$"&m3a={_editingData.M3a}" +
-			$"&consomation={_editingData.Consomation}" +
-			$"&reseau={Uri.EscapeDataString(_editingData.Reseau)}" +
-			$"&commentaire={Uri.EscapeDataString(_editingData.Commentaire)}";
-
-		try
-		{
-			using var client = new HttpClient();
-			using var request = new HttpRequestMessage(HttpMethod.Put, requestUrl);
-			using var response = client.SendAsync(request).GetAwaiter().GetResult();
-			using var reader = new StreamReader(response.Content.ReadAsStream());
-			_ = reader.ReadToEnd();
-		}
-		catch (HttpRequestException ex)
-		{
-			Console.WriteLine($"Failed to update data on server: {ex.Message}");
-		}
-		catch (Exception ex)
-		{
-			Console.WriteLine($"Unexpected error while updating data on server: {ex.Message}");
-		}
+		_editingData.Consomation = updatedConsomation;
+		_editingData.Reseau = updatedReseau;
+		_editingData.Commentaire = updatedCommentaire;
 
 		CloseActiveEditPanel();
 		RefreshData();
@@ -198,21 +193,17 @@ public partial class Modifier : UserControl
 
 		try
 		{
-			var requestUrl = $"http://localhost:8080/?id={id}";
-			using var client = new HttpClient();
-			using var request = new HttpRequestMessage(HttpMethod.Delete, requestUrl);
-			using var response = client.SendAsync(request).GetAwaiter().GetResult();
-			using var reader = new StreamReader(response.Content.ReadAsStream());
-			_ = reader.ReadToEnd();
-		}
-		catch (HttpRequestException ex)
-		{
-			Console.WriteLine($"Failed to delete data on server: {ex.Message}");
-			return;
+			var requestUrl = $"{AppState.ServerBaseUrl}?id={id}";
+			if (!ServerAccess.TrySend(HttpMethod.Delete, requestUrl, "delete data on server", out _))
+			{
+				ReturnToMenuAfterConnectionError();
+				return;
+			}
 		}
 		catch (Exception ex)
 		{
-			Console.WriteLine($"Unexpected error while deleting data on server: {ex.Message}");
+			Console.WriteLine($"Unexpected error while preparing data deletion: {ex.Message}");
+			ReturnToMenuAfterConnectionError();
 			return;
 		}
 
@@ -275,6 +266,16 @@ public partial class Modifier : UserControl
 	}
 
     private void RetourMenu(object? sender, RoutedEventArgs e)
+	{
+		BackRequested?.Invoke(this, EventArgs.Empty);
+	}
+
+	private void ReturnToMenuAfterConnectionError()
+	{
+		ServerAccess.HandleConnectionFailure(this, OnConnectionErrorDismissed);
+	}
+
+	private void OnConnectionErrorDismissed()
 	{
 		BackRequested?.Invoke(this, EventArgs.Empty);
 	}

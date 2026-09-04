@@ -8,6 +8,7 @@ public partial class MenuPage : UserControl
     public event EventHandler? AjoutRequested;
     public event EventHandler? ModifRequested;
     public event EventHandler? VoirRequested;
+    public event EventHandler? ConsomationRequested;
     public event EventHandler? ExcelRequested;
     public event EventHandler? QuitRequested;
 
@@ -29,6 +30,11 @@ public partial class MenuPage : UserControl
     private void VoirData(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         VoirRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void ConsomationData(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        ConsomationRequested?.Invoke(this, EventArgs.Empty);
     }
 
     private void CreationExcel(object? sender, Avalonia.Interactivity.RoutedEventArgs e)

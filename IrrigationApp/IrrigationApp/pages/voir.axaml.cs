@@ -1,10 +1,7 @@
-
 using System;
 using System.Linq;
 namespace IrrigationApp;
 
-using System.IO;
-using System.Net.Http;
 using System.Collections.Generic;
 using System.Text.Json;
 using Avalonia.Controls;
@@ -17,33 +14,44 @@ public partial class Voir : UserControl
 	public Voir()
 	{
 		InitializeComponent();
-		RefreshData();
 	}
 
 	public void RefreshData()
 	{
 		try
 		{
-			using var client = new HttpClient();
-			var content = client.GetStringAsync("http://localhost:8080/").GetAwaiter().GetResult();
+			if (!ServerAccess.TryGetString(AppState.ServerBaseUrl, "load data from server", out var content))
+			{
+				AppState.DataList ??= [];
+				ReturnToMenuAfterConnectionError();
+				return;
+			}
+
 			Console.WriteLine("Response from server: " + content);
 			AppState.DataList = JsonSerializer.Deserialize<List<Data>>(content) ?? [];
-		}
-		catch (HttpRequestException ex)
-		{
-			Console.WriteLine($"Failed to load data from server: {ex.Message}");
-			AppState.DataList ??= [];
 		}
 		catch (Exception ex)
 		{
 			Console.WriteLine($"Unexpected error while loading data from server: {ex.Message}");
 			AppState.DataList ??= [];
+			ReturnToMenuAfterConnectionError();
+			return;
 		}
 		
 		DataItemsControl.ItemsSource = AppState.DataList?.OrderByDescending(d => d.Id).ToArray() ?? Array.Empty<Data>();
 	}
 
 	private void RetourMenu(object? sender, RoutedEventArgs e)
+	{
+		BackRequested?.Invoke(this, EventArgs.Empty);
+	}
+
+	private void ReturnToMenuAfterConnectionError()
+	{
+		ServerAccess.HandleConnectionFailure(this, OnConnectionErrorDismissed);
+	}
+
+	private void OnConnectionErrorDismissed()
 	{
 		BackRequested?.Invoke(this, EventArgs.Empty);
 	}

@@ -35,9 +35,23 @@ class Program
         AppState.DataList = new List<Data>();
         Console.WriteLine("Starting server...");
         using var listener = new HttpListener();
-        listener.Prefixes.Add("http://localhost:8080/");
+        var listenPrefix = "http://+:5000/";
+        listener.Prefixes.Add(listenPrefix);
 
-        listener.Start();
+        try
+        {
+            listener.Start();
+            Console.WriteLine($"Listening on {listenPrefix}");
+            Console.WriteLine("Client URL example: http://192.168.x.x:5000/");
+        }
+        catch (HttpListenerException ex)
+        {
+            var currentUser = $"{Environment.UserDomainName}\\{Environment.UserName}";
+            Console.WriteLine($"Failed to start listener: {ex.Message}");
+            Console.WriteLine("Run this once in an ADMIN terminal, then restart the server:");
+            Console.WriteLine($"netsh http add urlacl url=http://+:5000/ user=\"{currentUser}\"");
+            return;
+        }
 
         while(true)
         {
